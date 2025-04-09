@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import LoginPage from './views/LoginPage.vue'
-import RegisterPage from './views/RegisterPage.vue'
+import LoginPage from '@/views/LoginPage.vue'
+import RegisterPage from '@/views/RegisterPage.vue'
+import UserProfile from '@/views/UserProfile.vue'
+import CatalogPage from '@/views/CatalogPage.vue'
 // Импортируй другие страницы, если они есть
 
 const routes = [
@@ -16,6 +18,16 @@ const routes = [
     path: '/register',
     component: RegisterPage
   },
+  {
+    path: '/profile',
+    name: 'Profile',
+    component: UserProfile
+  },
+  { 
+    path: '/catalog',
+    component: CatalogPage
+  },
+  
   // добавь остальные маршруты при необходимости
 ]
 

@@ -2,7 +2,7 @@
     <div class="login-wrapper">
       <div class="login-card">
         <form @submit.prevent="login">
-          <label>Email:</label>
+          <label>Имя пользователя:</label>
           <input v-model="username" type="text" />
   
           <label>Пароль:</label>
@@ -36,7 +36,7 @@
   export default {
     data() {
       return {
-        username: '',
+        username: '', // 👈 теперь всё синхронно
         password: '',
         error: ''
       }
@@ -44,16 +44,17 @@
     methods: {
       async login() {
         try {
-          const res = await axios.post('http://localhost:5000/api/auth/login', {
+          await axios.post('http://localhost:5000/api/auth/login', {
             username: this.username,
             password: this.password
           })
-          alert(`Добро пожаловать, ${res.data.user.username}`)
+          this.$router.push('/catalog') // Переход на личный кабинет
         } catch (err) {
           this.error = 'Неверный логин или пароль'
         }
       }
     }
+
   }
   </script>
   

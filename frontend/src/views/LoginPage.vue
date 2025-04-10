@@ -1,7 +1,7 @@
 <template>
     <div class="login-wrapper">
       <div class="login-card">
-        <form @submit.prevent="login">
+        <form @submit.prevent="handleLogin">
           <label>Имя пользователя:</label>
           <input v-model="username" type="text" />
   
@@ -31,32 +31,48 @@
   </template>
   
   <script>
-  import axios from 'axios'
-  
   export default {
+    name: 'LoginPage',
     data() {
       return {
-        username: '', // 👈 теперь всё синхронно
+        username: '',      // 👈 теперь определён
         password: '',
         error: ''
-      }
+      };
     },
     methods: {
-      async login() {
+      async handleLogin() {
         try {
-          await axios.post('http://localhost:5000/api/auth/login', {
-            username: this.username,
-            password: this.password
-          })
-          this.$router.push('/catalog') // Переход на личный кабинет
+          const response = await fetch('http://localhost:5000/api/auth/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              username: this.username, // 👈 отправляем username, как в шаблоне
+              password: this.password
+            })
+          });
+  
+          if (!response.ok) {
+            const errorData = await response.json();
+            this.error = errorData.message || 'Неверный логин или пароль';
+            return;
+          }
+  
+          const user = await response.json();
+  
+          localStorage.setItem('user', JSON.stringify(user));
+          this.$router.push('/catalog');
         } catch (err) {
-          this.error = 'Неверный логин или пароль'
+          console.error('Ошибка входа:', err);
+          this.error = 'Произошла ошибка. Попробуйте позже.';
         }
       }
     }
-
-  }
+  };
   </script>
+  
   
   <style scoped>
 

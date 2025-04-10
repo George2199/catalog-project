@@ -1,123 +1,125 @@
 <template>
-  <div class="profile-page">
-    <header class="profile-header">
-      <div class="home-icon">🏠</div>
-      <div class="user-info">
-        {{ user.username }}
-      </div>
-      <button class="logout-btn" @click="logout">Выйти</button>
-    </header>
-
-    <main class="profile-main">
+  <div>
+    <AppHeader />
+    <div class="profile-container">
       <h2>Личный кабинет</h2>
-      <p><strong>Имя пользователя:</strong> {{ user.username }}</p>
-      <p><strong>Email:</strong> {{ user.email }}</p>
-      <p><strong>Статус:</strong> {{ user.is_banned ? 'Заблокирован' : 'Активен' }}</p>
-
-      <h3>Мои ресурсы</h3>
-      <div v-for="resource in resources" :key="resource.id" class="resource-box">
-        <div>
-          <strong>{{ resource.title }}</strong><br />
-          <small>Добавлено: {{ formatDate(resource.created_at) }}</small>
-        </div>
-        <button class="edit-btn">Редактировать</button>
+      <div class="profile-info">
+        <p><strong>Имя пользователя:</strong> {{ user.name }}</p>
+        <p><strong>Email:</strong> {{ user.email }}</p>
+        <p><strong>Статус:</strong> {{ user.status }}</p>
       </div>
 
-      <button class="back-btn" @click="$router.push('/')">Назад</button>
-    </main>
+      <div class="resources-header">
+        <h3>Мои ресурсы</h3>
+        <button class="add-resource" @click="goToAddResource">Добавить ресурс</button>
+      </div>
+
+      <div class="resources-list">
+        <div
+          class="resource-card"
+          v-for="(resource, index) in user.resources"
+          :key="index"
+        >
+          <div class="resource-text">
+            <p class="resource-title">{{ resource.title }}</p>
+            <p class="resource-date">Добавлено: {{ resource.date }}</p>
+          </div>
+          <button class="edit-btn">Редактировать</button>
+        </div>
+      </div>
+
+      <button class="back-button" @click="$router.go(-1)">Назад</button>
+    </div>
   </div>
 </template>
 
 <script>
+import AppHeader from '@/components/AppHeader.vue';
+
 export default {
+  components: { AppHeader },
   data() {
     return {
       user: {
-        username: 'Иоганн фон Цвайшпиц',
+        name: 'Иоганн фон Цвайшпиц',
         email: 'io@lands.de',
-        is_banned: false
-      },
-      resources: [
-        { id: 1, title: 'SmartMind KB', created_at: '2025-04-05' },
-        { id: 2, title: 'EduBase', created_at: '2025-04-10' }
-      ]
-    }
+        status: 'Активен',
+        resources: [
+          { title: 'SmartMind KB', date: '05.04.2025' },
+          { title: 'EduBase', date: '10.04.2025' }
+        ]
+      }
+    };
   },
   methods: {
-    logout() {
-      alert('Выход выполнен'); // можно заменить на логику выхода
-    },
-    formatDate(dateStr) {
-      const [y, m, d] = dateStr.split('-')
-      return `${d}.${m}.${y}`
+    goToAddResource() {
+      this.$router.push('/add-resource');
     }
   }
-}
+};
 </script>
 
-<style scoped>
-.profile-page {
-  min-height: 100vh;
-  background: #f7f8fa;
-}
-
-.profile-header {
-  background-color: #002b5b;
-  color: white;
-  display: flex;
-  justify-content: space-between;
-  padding: 1rem 2rem;
-  align-items: center;
-}
-
-.logout-btn {
-  background-color: #7a0000;
-  border: none;
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.profile-main {
+<style>
+.profile-container {
   max-width: 600px;
   margin: 2rem auto;
-  background: white;
   padding: 2rem;
-  border-radius: 16px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-}
-
-h2, h3 {
-  color: #002b5b;
-}
-
-.resource-box {
-  border: 1px solid #eee;
-  padding: 1rem;
+  background: white;
   border-radius: 10px;
-  margin-top: 1rem;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  text-align: left;
+  font-family: Arial, sans-serif;
+}
+.profile-info p {
+  margin: 0.5rem 0;
+}
+.resources-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.edit-btn {
-  background: #002b5b;
-  color: white;
-  border: none;
-  padding: 0.5rem 0.75rem;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.back-btn {
   margin-top: 2rem;
-  background: #002b5b;
+}
+.add-resource {
+  background-color: #002d5b;
   color: white;
-  padding: 0.6rem 1.2rem;
   border: none;
-  border-radius: 10px;
+  padding: 0.4rem 0.8rem;
   cursor: pointer;
+  border-radius: 4px;
+}
+.resources-list {
+  margin-top: 1rem;
+}
+.resource-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f5f5f5;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+.resource-title {
+  font-weight: bold;
+}
+.edit-btn {
+  background-color: #002d5b;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.back-button {
+  margin-top: 1rem;
+  background-color: #002d5b;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.back-button:hover {
+  background-color: #004080;
 }
 </style>

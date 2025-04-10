@@ -15,7 +15,7 @@
           </select>
 
           <label>Показывать:</label>
-          <select v-model="perPage" @change="currentPage = 1">
+          <select v-model="perPage" @change="currentPage = 1; fetchItems()">
             <option :value="10">10</option>
             <option :value="25">25</option>
             <option :value="50">50</option>
@@ -23,43 +23,42 @@
         </div>
       </div>
 
-      <div class="categories">
-        <span>Разделы:</span>
-        <button>Все</button>
-        <button>Образование</button>
-        <button>Наука</button>
-        <button>Разработка</button>
-      </div>
+      <div class="section-chips">
+      <span
+        v-for="section in allSections"
+        :key="section"
+        class="section-chip"
+        :class="{ active: sectionFilter.includes(section) }"
+        @click="toggleSection(section)"
+      >
+        {{ section }}
+      </span>
+    </div>
+
 
       <div class="resource-list">
-        <!-- <div
-          v-for="resource in paginatedResources"
-          :key="resource.id"
-          class="resource-card"
-        > -->
-          <div class="catalog-container">
-            <div v-for="resource in paginatedResources" :key="resource.id" class="resource-card">
-              <div class="resource-info">
-                <a :href="resource.url" class="resource-title">{{ resource.title }}</a>
-                <p class="resource-description">{{ resource.description }}</p>
-                <p class="resource-meta">Обновлено: {{ formatDate(resource.last_updated) }}</p>
-                <p class="resource-meta">Контакт: {{ resource.contact_info }}</p>
-              </div>
-              <div class="resource-action">
-                <a :href="resource.url" class="go-button">Перейти</a>
-              </div>
+        <div class="catalog-container">
+          <div v-for="resource in paginatedResources" :key="resource.id" class="resource-card">
+            <div class="resource-info">
+              <router-link :to="`/resource/${resource.id}`" class="resource-title">{{ resource.title }}</router-link>
+              <p class="resource-description">{{ resource.description }}</p>
+              <p class="resource-meta">Обновлено: {{ formatDate(resource.last_updated) }}</p>
+              <p class="resource-meta">Контакт: {{ resource.contact_info }}</p>
+            </div>
+            <div class="resource-action">
+              <router-link :to="`/resource/${resource.id}`" class="go-button">Перейти</router-link>
             </div>
           </div>
-        <!-- </div> -->
+        </div>
       </div>
 
       <div class="pagination">
-        <button :disabled="currentPage === 1" @click="currentPage--">
+        <button :disabled="currentPage === 1" @click="currentPage--; fetchItems()">
           Назад
         </button>
 
         <span>Страница {{ currentPage }} из {{ totalPages }}</span>
-        <button :disabled="currentPage === totalPages" @click="currentPage++">Вперед</button>
+        <button :disabled="currentPage === totalPages" @click="currentPage++; fetchItems()">Вперед</button>
       </div>
     </div>
   </div>
@@ -69,6 +68,7 @@
 import AppHeader from '@/components/AppHeader.vue'
 import axios from 'axios'
 
+
 export default {
   components: {
     AppHeader
@@ -76,34 +76,60 @@ export default {
   data() {
     return {
       allResources: [],
-      resources: [],
+      perPage: 10,
       currentPage: 1,
-      selectedLimit: 10,
-      sortBy: 'date'
+      sectionFilter: [],
+      allSections: ["science", "tech", "history", "math", "culture"]
     }
   },
   async created() {
-    const res = await axios.get('http://localhost:5000/api/resources')
-    this.allResources = res.data
+    await this.fetchItems()
   },
   methods: {
-    goToPage(page) {
-      this.currentPage = page
+    async fetchItems() {
+      try {
+        const params = new URLSearchParams({
+          limit: this.perPage,
+          offset: (this.currentPage - 1) * this.perPage,
+        });
+
+        if (this.sectionFilter.length > 0) {
+          this.sectionFilter.forEach(section => {
+            params.append('section', section);
+          });
+        }
+
+        const res = await axios.get(`http://localhost:5000/api/resources?${params}`);
+        this.allResources = res.data;
+      } catch (err) {
+        console.error('Ошибка загрузки ресурсов:', err);
+      }
     },
     formatDate(dateString) {
       const options = { year: 'numeric', month: '2-digit', day: '2-digit' }
       return new Date(dateString).toLocaleDateString('ru-RU', options)
+    },
+
+    toggleSection(section) {
+      if (this.sectionFilter.includes(section)) {
+        this.sectionFilter = this.sectionFilter.filter(s => s !== section)
+      } else {
+        this.sectionFilter.push(section)
+      }
+      this.currentPage = 1
+      this.fetchItems()
     }
+
   },
   computed: {
     totalPages() {
-      return Math.ceil(this.allResources.length / this.selectedLimit)
+      return Math.ceil(this.allResources.length / this.perPage)
     },
-      paginatedResources() {
-      const start = (this.currentPage - 1) * this.selectedLimit
-      const end = start + this.selectedLimit
+    paginatedResources() {
+      const start = (this.currentPage - 1) * this.perPage
+      const end = start + this.perPage
       return this.allResources.slice(start, end)
-    },
+    }
   }
 }
 </script>
@@ -140,24 +166,24 @@ body.style {
   border: 1px solid #ccc;
 }
 
-.filter-controls {
+.filters {
   display: flex;
   gap: 10px;
   align-items: center;
 }
 
-.categories {
+.filters {
   margin-bottom: 20px;
   display: flex;
   gap: 10px;
   align-items: center;
 }
 
-.categories span {
+.filters span {
   font-weight: bold;
 }
 
-.categories button {
+.filters button {
   padding: 5px 10px;
   border-radius: 5px;
   background: #f0f0f0;
@@ -221,5 +247,26 @@ body.style {
   background: #ccc;
   cursor: not-allowed;
 }
+
+.section-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 20px;
+}
+
+.section-chip {
+  padding: 6px 12px;
+  border-radius: 9999px;
+  background-color: #eee;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.section-chip.active {
+  background-color: #002b5c;
+  color: white;
+}
+
 
 </style>

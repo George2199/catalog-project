@@ -1,139 +1,148 @@
 <template>
-    <div>
-      <AppHeader :user="user"/>
-      <div class="add-resource-container">
-        <h2>Добавление нового ресурса</h2>
-  
-        <form @submit.prevent="handleSubmit">
-          <label>Название ресурса *</label>
-          <input v-model="form.title" type="text" required />
-  
-          <label>URL *</label>
-          <input v-model="form.url" type="url" required />
-  
-          <label>Раздел *</label>
-          <input v-model="form.section" type="text" required />
-  
-          <label>Ключевые слова *</label>
-          <input v-model="form.tags" type="text" required />
-  
-          <label>Краткое описание</label>
-          <textarea v-model="form.description"></textarea>
-  
-          <label>Контактная информация *</label>
-          <input v-model="form.contact_info" type="text" required />
-  
-          <label>Изображения ресурса:</label>
-          <div class="images-preview">
-            <input type="file" multiple @change="handleFileChange" />
-            <div class="image-box" v-for="(img, index) in previewImages" :key="index">
-              <img :src="img" alt="image preview" v-if="img" />
-            </div>
+  <div>
+    <AppHeader :user="user" />
+    <div class="add-resource-container">
+      <h2>Добавление нового ресурса</h2>
+
+      <form @submit.prevent="handleSubmit">
+        <label>Название ресурса *</label>
+        <input v-model="form.title" type="text" required />
+
+        <label>URL *</label>
+        <input v-model="form.url" type="url" required />
+
+        <label>Раздел *</label>
+        <input v-model="form.section" type="text" required />
+
+        <label>Ключевые слова *</label>
+        <input v-model="form.tags" type="text" required />
+
+        <label>Краткое описание</label>
+        <textarea v-model="form.description"></textarea>
+
+        <label>Контактная информация *</label>
+        <input v-model="form.contact_info" type="text" required />
+
+        <label>Изображения ресурса:</label>
+        <div class="images-preview">
+          <input type="file" multiple @change="handleFileChange" />
+          <div class="image-box" v-for="(img, index) in previewImages" :key="index">
+            <img :src="img" alt="image preview" v-if="img" />
           </div>
-  
-          <div class="actions">
-            <button type="button" class="clear" @click="resetForm">Очистить</button>
-            <button type="submit" class="submit" :disabled="!isValid">Добавить ресурс</button>
-          </div>
-  
-          <p class="error" v-if="!isValid">⚠ Вы не можете добавить ресурс, пока не заполнены обязательные поля!</p>
-        </form>
-      </div>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="clear" @click="resetForm">Очистить</button>
+          <button type="submit" class="submit" :disabled="!isValid">Добавить ресурс</button>
+        </div>
+
+        <p class="error" v-if="!isValid">⚠ Заполните обязательные поля</p>
+      </form>
     </div>
-  </template>
-  
-  <script>
-  import AppHeader from '@/components/AppHeader.vue';
-  
-  export default {
-    components: { AppHeader },
-    data() {
-      return {
-        user: {
-          full_name: 'Иоганн фон Цвайшпиц',
-          email: 'io@lands.de'
-        },
-        form: {
-          title: '',
-          url: '',
-          section: '',
-          tags: '',
-          description: '',
-          contact_info: '',
-          images: []
-        },
-        previewImages: []
-      };
-    },
-    computed: {
-      isValid() {
-        const { title, url, section, tags, contact_info } = this.form;
-        return title && url && section && tags && contact_info;
-      }
-    },
-    methods: {
-      handleFileChange(event) {
-        const files = event.target.files;
-        this.previewImages = [];
-        this.form.images = Array.from(files);
-  
-        for (const file of this.form.images) {
-          const reader = new FileReader();
-          reader.onload = e => {
-            this.previewImages.push(e.target.result);
-          };
-          reader.readAsDataURL(file);
-        }
+  </div>
+</template>
+
+<script>
+import AppHeader from '@/components/AppHeader.vue';
+
+export default {
+  components: { AppHeader },
+  data() {
+    return {
+      user: null,
+      form: {
+        title: '',
+        url: '',
+        section: '',
+        tags: '',
+        description: '',
+        contact_info: '',
+        images: []
       },
-      async handleSubmit() {
-        if (!this.isValid) return;
-
-        const formData = {
-            title: this.form.title,
-            url: this.form.url,
-            section: this.form.section,
-            tags: this.form.tags,
-            description: this.form.description,
-            contact_info: this.form.contact_info,
-        };
-
-        try {
-            const res = await fetch('http://localhost:5000/api/resources/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(formData)
-            });
-
-            if (!res.ok) throw new Error('Ошибка при сохранении ресурса');
-
-            const result = await res.json();
-            console.log('Ресурс добавлен:', result);
-
-            this.resetForm();
-            this.$router.push('/profile');
-        } catch (err) {
-            console.error('Ошибка отправки:', err);
-            alert('Не удалось добавить ресурс. Попробуйте позже.');
-        }
-        }
-        ,
-      resetForm() {
-        this.form = {
-          title: '',
-          url: '',
-          section: '',
-          tags: '',
-          description: '',
-          contact_info: '',
-          images: []
-        };
-        this.previewImages = [];
-      }
+      previewImages: []
+    };
+  },
+  computed: {
+    isValid() {
+      const { title, url, section, tags, contact_info } = this.form;
+      return title && url && section && tags && contact_info;
     }
-  };
-  </script>
+  },
+  created() {
+    this.fetchUser();
+  },
+  methods: {
+    async fetchUser() {
+      const user_id = localStorage.getItem("user_id");
+      if (!user_id) return;
+
+      try {
+        const res = await fetch(`http://localhost:5000/api/auth/profile?user_id=${user_id}`);
+        if (!res.ok) throw new Error("Ошибка загрузки пользователя");
+        const data = await res.json();
+        this.user = data;
+      } catch (err) {
+        console.error("Ошибка при загрузке пользователя:", err);
+      }
+    },
+
+    handleFileChange(event) {
+      const files = event.target.files;
+      this.previewImages = [];
+      this.form.images = Array.from(files);
+
+      for (const file of this.form.images) {
+        const reader = new FileReader();
+        reader.onload = e => this.previewImages.push(e.target.result);
+        reader.readAsDataURL(file);
+      }
+    },
+
+    async handleSubmit() {
+      if (!this.isValid || !this.user) return;
+
+      const formData = {
+        ...this.form,
+        user_id: this.user.id,
+        last_updated: new Date().toISOString()
+      };
+
+      try {
+        const res = await fetch('http://localhost:5000/api/resources/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(formData)
+        });
+
+        if (!res.ok) throw new Error('Ошибка при сохранении ресурса');
+        const result = await res.json();
+        console.log('Ресурс добавлен:', result);
+
+        this.resetForm();
+        this.$router.push('/profile');
+      } catch (err) {
+        console.error('Ошибка отправки:', err);
+        alert('Не удалось добавить ресурс. Попробуйте позже.');
+      }
+    },
+
+    resetForm() {
+      this.form = {
+        title: '',
+        url: '',
+        section: '',
+        tags: '',
+        description: '',
+        contact_info: '',
+        images: []
+      };
+      this.previewImages = [];
+    }
+  }
+};
+</script>
   
   
   <style>

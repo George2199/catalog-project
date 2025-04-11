@@ -6,9 +6,9 @@
         </router-link>
       </div>
   
-      <router-link to="/profile" class="header__right" v-if="user">
-        <span class="header__username">{{ user.full_name }}</span>
-        <img :src="avatar" alt="Аватар пользователя" class="header__avatar" />
+      <router-link to="/profile" class="header__right" v-if="isLoggedIn">
+        <span class="header__username">{{ user?.username || 'Гость'}}</span>
+        <img :src="avatarUrl" alt="Аватар пользователя" class="header__avatar" />
       </router-link>
     </header>
   </template>
@@ -16,15 +16,22 @@
   <script>
   export default {
     props: {
-      user: {
-        type: Object,
-        required: false
-      }
+      user: Object
     },
     computed: {
-      avatar() {
-        // Одинаковый для всех пользователей
+      isLoggedIn() {
+        return !!this.user
+      },
+      avatarUrl() {
         return require('@/assets/avatar.png')
+      }
+    },
+    methods: {
+      logout() {
+        localStorage.removeItem('token')
+        localStorage.removeItem('username')
+        localStorage.removeItem('user_id')
+        this.$router.push('/login')
       }
     }
   }

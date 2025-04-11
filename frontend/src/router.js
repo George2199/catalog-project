@@ -4,6 +4,7 @@ import RegisterPage from '@/views/RegisterPage.vue'
 import UserProfile from '@/views/UserProfile.vue'
 import CatalogPage from '@/views/CatalogPage.vue'
 import AddResource from '@/views/AddResource.vue';
+import EditResource from '@/views/EditResource.vue';
 
 const routes = [
   {
@@ -37,7 +38,11 @@ const routes = [
     name: 'AddResource',
     component: AddResource
   }
-  ,
+  , {
+    path: '/resources/:id/edit',
+    name: 'EditResource',
+    component: EditResource
+  }
 ]
 
 const router = createRouter({

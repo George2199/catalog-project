@@ -1,6 +1,6 @@
 <template>
   <div class="page-wrapper">
-    <AppHeader :user="{ full_name: 'Иоганн фон Цвайшпиц' }" />
+    <AppHeader v-if="user" :user="user" />
 
     <div class="catalog-wrapper">
       <h1>Каталог ресурсов</h1>
@@ -68,7 +68,6 @@
 import AppHeader from '@/components/AppHeader.vue'
 import axios from 'axios'
 
-
 export default {
   components: {
     AppHeader
@@ -79,13 +78,25 @@ export default {
       perPage: 10,
       currentPage: 1,
       sectionFilter: [],
-      allSections: ["science", "tech", "history", "math", "culture"]
+      allSections: ["science", "tech", "history", "math", "culture"],
+      user: null // ➕ Добавляем user
     }
   },
-  async created() {
-    await this.fetchItems()
+  created() {
+    this.loadUserFromStorage()
+    this.fetchItems()
   },
   methods: {
+    loadUserFromStorage() {
+      const username = localStorage.getItem("username")
+      const user_id = localStorage.getItem("user_id")
+
+      if (username && user_id) {
+        this.user = { id: user_id, username: username }
+        console.log("Загружен user:", this.user)
+      }
+    },
+
     async fetchItems() {
       try {
         const params = new URLSearchParams({
@@ -105,6 +116,7 @@ export default {
         console.error('Ошибка загрузки ресурсов:', err);
       }
     },
+
     formatDate(dateString) {
       const options = { year: 'numeric', month: '2-digit', day: '2-digit' }
       return new Date(dateString).toLocaleDateString('ru-RU', options)
@@ -119,7 +131,6 @@ export default {
       this.currentPage = 1
       this.fetchItems()
     }
-
   },
   computed: {
     totalPages() {
@@ -133,6 +144,7 @@ export default {
   }
 }
 </script>
+
 
 <style scoped>
 

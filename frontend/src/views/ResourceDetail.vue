@@ -1,88 +1,106 @@
 <template>
-    <div>
-      <div v-if="resource" class="resource-detail">
-        <div class="resource-content">
-          <h1 class="resource-title">
-            <a :href="resource.url" target="_blank" rel="noopener">{{ resource.title }}</a>
-          </h1>
-  
-          <div class="gallery" v-if="resource.images && resource.images.length">
-            <img
-              v-for="(img, index) in fullImageUrls"
-              :key="index"
-              :src="img"
-              class="gallery-image"
-              alt="Resource image"
-            />
-          </div>
-  
-          <div class="info-text">
-            <p class="description"><strong>Описание:</strong><br>{{ resource.description }}</p>
-  
-            <p><strong>Ссылка:</strong> <a :href="resource.url" target="_blank">{{ resource.url }}</a></p>
-  
-            <p><strong>Ключевые слова:</strong>
-              <span v-for="(tag, index) in parsedTags" :key="index">
-                <span :style="{ color: isHighlighted(tag) ? 'red' : 'black' }">{{ tag }}</span>
-                <span v-if="index < parsedTags.length - 1">, </span>
-              </span>
-            </p>
-  
-            <p><strong>Обновлено:</strong> {{ formatDate(resource.last_updated) }}</p>
-            <p><strong>Контакт:</strong> {{ resource.contact_info }}</p>
-  
-            <button class="back-button" @click="$router.go(-1)">Назад</button>
-          </div>
+  <div>
+    <AppHeader :user="user" />
+    <div v-if="resource" class="resource-detail">
+      <div class="resource-content">
+        <h1 class="resource-title">
+          <a :href="resource.url" target="_blank" rel="noopener">{{ resource.title }}</a>
+        </h1>
+
+        <div class="gallery" v-if="resource.images && resource.images.length">
+          <img
+            v-for="(img, index) in fullImageUrls"
+            :key="index"
+            :src="img"
+            class="gallery-image"
+            alt="Resource image"
+          />
+        </div>
+
+        <div class="info-text">
+          <p class="description"><strong>Описание:</strong><br>{{ resource.description }}</p>
+
+          <p><strong>Ссылка:</strong> <a :href="resource.url" target="_blank">{{ resource.url }}</a></p>
+
+          <p><strong>Ключевые слова:</strong>
+            <span v-for="(tag, index) in parsedTags" :key="index">
+              <span :style="{ color: isHighlighted(tag) ? 'red' : 'black' }">{{ tag }}</span>
+              <span v-if="index < parsedTags.length - 1">, </span>
+            </span>
+          </p>
+
+          <p><strong>Обновлено:</strong> {{ formatDate(resource.last_updated) }}</p>
+          <p><strong>Контакт:</strong> {{ resource.contact_info }}</p>
+
+          <button class="back-button" @click="$router.go(-1)">Назад</button>
         </div>
       </div>
-  
-      <div v-else class="loading">Загрузка...</div>
     </div>
-  </template>
-  
-  <script>
-  export default {
-    name: 'ResourceDetail',
-    data() {
-      return {
-        resource: null
-      };
+
+    <div v-else class="loading">Загрузка...</div>
+  </div>
+</template>
+
+<script>
+import AppHeader from '@/components/AppHeader.vue';
+
+export default {
+  name: 'ResourceDetail',
+  components: { AppHeader },
+  data() {
+    return {
+      resource: null,
+      user: null
+    };
+  },
+  computed: {
+    parsedTags() {
+      return this.resource?.tags?.split(',').map(t => t.trim()) || [];
     },
-    computed: {
-      parsedTags() {
-        return this.resource?.tags?.split(',').map(t => t.trim()) || [];
-      },
-      fullImageUrls() {
-        if (!this.resource?.images) return [];
-        return this.resource.images.map(path =>
-          path.startsWith('/') ? `http://localhost:5000${path}` : path
-        );
-      }
-    },
-    methods: {
-      async fetchResource() {
-        try {
-          const id = this.$route.params.id;
-          const response = await fetch(`http://localhost:5000/api/resources/${id}`);
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          this.resource = await response.json();
-        } catch (error) {
-          console.error('Ошибка при загрузке ресурса:', error);
-        }
-      },
-      formatDate(dateStr) {
-        const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
-        return new Date(dateStr).toLocaleDateString('ru-RU', options);
-      },
-      isHighlighted(tag) {
-        return ['знания', 'наука', 'искусственный интеллект', 'open data'].includes(tag.toLowerCase());
-      }
-    },
-    mounted() {
-      this.fetchResource();
+    fullImageUrls() {
+      if (!this.resource?.images) return [];
+      return this.resource.images.map(path =>
+        path.startsWith('/') ? `http://localhost:5000${path}` : path
+      );
     }
-  };
-  </script>
+  },
+  methods: {
+    async fetchResource() {
+      try {
+        const id = this.$route.params.id;
+        const response = await fetch(`http://localhost:5000/api/resources/${id}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        this.resource = await response.json();
+      } catch (error) {
+        console.error('Ошибка при загрузке ресурса:', error);
+      }
+    },
+    async loadUser() {
+      const user_id = localStorage.getItem("user_id");
+      if (!user_id) return;
+
+      try {
+        const res = await fetch(`http://localhost:5000/api/auth/profile?user_id=${user_id}`);
+        if (!res.ok) throw new Error("Ошибка загрузки пользователя");
+        this.user = await res.json();
+      } catch (err) {
+        console.error("Ошибка при получении пользователя:", err);
+      }
+    },
+    formatDate(dateStr) {
+      const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+      return new Date(dateStr).toLocaleDateString('ru-RU', options);
+    },
+    isHighlighted(tag) {
+      return ['знания', 'наука', 'искусственный интеллект', 'open data'].includes(tag.toLowerCase());
+    }
+  },
+  mounted() {
+    this.fetchResource();
+    this.loadUser();
+  }
+};
+</script>
   
   <style>
   .resource-detail {

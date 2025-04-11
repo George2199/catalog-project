@@ -1,7 +1,7 @@
 <template>
     <div class="login-wrapper">
       <div class="login-card">
-        <form @submit.prevent="handleLogin">
+        <form @submit.prevent="login">
           <label>Имя пользователя:</label>
           <input v-model="username" type="text" />
   
@@ -30,48 +30,45 @@
     </div>
   </template>
   
-  <script>
+  <script>  
   export default {
-    name: 'LoginPage',
     data() {
       return {
-        username: '',      // 👈 теперь определён
+        username: '',
         password: '',
         error: ''
-      };
+      }
     },
     methods: {
-      async handleLogin() {
-        try {
-          const response = await fetch('http://localhost:5000/api/auth/login', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              username: this.username, // 👈 отправляем username, как в шаблоне
-              password: this.password
-            })
-          });
-  
-          if (!response.ok) {
-            const errorData = await response.json();
-            this.error = errorData.message || 'Неверный логин или пароль';
-            return;
+      login() {
+        fetch("http://localhost:5000/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: this.username,
+            password: this.password
+          })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.access_token) {
+            localStorage.setItem("token", data.access_token);
+            localStorage.setItem("user_id", data.user_id);
+            localStorage.setItem("username", data.username);
+            this.$router.push("/catalog");
+          } else {
+            alert("Ошибка входа: " + (data.error || "Неизвестно"));
           }
-  
-          const user = await response.json();
-  
-          localStorage.setItem('user', JSON.stringify(user));
-          this.$router.push('/catalog');
-        } catch (err) {
-          console.error('Ошибка входа:', err);
-          this.error = 'Произошла ошибка. Попробуйте позже.';
-        }
+        })
+        .catch(err => {
+          console.error("Ошибка запроса:", err);
+          alert("Сервер не отвечает");
+        });
       }
     }
-  };
+  }
   </script>
+  
   
   
   <style scoped>

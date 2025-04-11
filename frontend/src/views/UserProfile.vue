@@ -1,12 +1,12 @@
 <template>
   <div>
-    <AppHeader />
+    <AppHeader :user="user" />
+
     <div class="profile-container">
       <h2>Личный кабинет</h2>
       <div class="profile-info">
-        <p><strong>Имя пользователя:</strong> {{ user.name }}</p>
+        <p><strong>Имя пользователя:</strong> {{ user.username }}</p>
         <p><strong>Email:</strong> {{ user.email }}</p>
-        <p><strong>Статус:</strong> {{ user.status }}</p>
       </div>
 
       <div class="resources-header">
@@ -24,7 +24,16 @@
             <p class="resource-title">{{ resource.title }}</p>
             <p class="resource-date">Добавлено: {{ resource.date }}</p>
           </div>
-          <button class="edit-btn">Редактировать</button>
+          <button class="delete-btn" @click="deleteResource(resource.id)">
+            Удалить
+          </button>
+          <router-link
+            class="edit-btn"
+            :to="`/resources/${resource.id}/edit`"
+          >
+            Редактировать
+          </router-link>
+
         </div>
       </div>
 
@@ -43,7 +52,6 @@ export default {
       user: {
         name: 'Иоганн фон Цвайшпиц',
         email: 'io@lands.de',
-        status: 'Активен',
         resources: [
           { title: 'SmartMind KB', date: '05.04.2025' },
           { title: 'EduBase', date: '10.04.2025' }
@@ -51,9 +59,43 @@ export default {
       }
     };
   },
+  created() {
+    this.fetchUserProfile();
+  },
   methods: {
+  async fetchUserProfile() {
+    const user_id = localStorage.getItem("user_id");
+    if (!user_id) return;
+
+    try {
+      const res = await fetch(`http://localhost:5000/api/auth/profile?user_id=${user_id}`);
+
+      if (!res.ok) throw new Error("Ошибка загрузки профиля");
+      const data = await res.json();
+      this.user = data;
+    } catch (err) {
+      console.error(err);
+    }
+  },
     goToAddResource() {
       this.$router.push('/add-resource');
+    },
+    async deleteResource(id) {
+      if (!confirm("Вы уверены, что хотите удалить этот ресурс?")) return;
+
+      try {
+        const res = await fetch(`http://localhost:5000/api/resources/${id}`, {
+          method: 'DELETE'
+        });
+
+        if (!res.ok) throw new Error("Ошибка при удалении ресурса");
+
+        // Обновляем список ресурсов без удалённого
+        this.user.resources = this.user.resources.filter(r => r.id !== id);
+      } catch (err) {
+        console.error("Ошибка при удалении:", err);
+        alert("Не удалось удалить ресурс. Попробуйте позже.");
+      }
     }
   }
 };
@@ -122,4 +164,18 @@ export default {
 .back-button:hover {
   background-color: #004080;
 }
+
+.delete-btn {
+  background-color: #c62828;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  border-radius: 4px;
+  margin-left: 0.5rem;
+}
+.delete-btn:hover {
+  background-color: #a30000;
+}
+
 </style>

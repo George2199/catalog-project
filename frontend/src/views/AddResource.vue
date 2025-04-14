@@ -77,7 +77,7 @@ export default {
       if (!user_id) return;
 
       try {
-        const res = await fetch(`http://localhost:5000/api/auth/profile?user_id=${user_id}`);
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login`);
         if (!res.ok) throw new Error("Ошибка загрузки пользователя");
         const data = await res.json();
         this.user = data;
@@ -108,7 +108,7 @@ export default {
       };
 
       try {
-        const res = await fetch('http://localhost:5000/api/resources/', {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'

@@ -82,7 +82,7 @@ export default {
       if (!user_id) return;
 
       try {
-        const res = await fetch(`http://localhost:5000/api/auth/profile?user_id=${user_id}`);
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login`);
         if (!res.ok) throw new Error("Ошибка загрузки пользователя");
         this.user = await res.json();
       } catch (err) {

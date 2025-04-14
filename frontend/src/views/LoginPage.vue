@@ -13,7 +13,7 @@
   
         <div class="links">
             <router-link to="/register">Пройти регистрацию</router-link>
-          <a href="#">Войти как гость</a>
+            <a href="#" @click.prevent="loginAsGuest">Войти как гость</a>
         </div>
   
         <div class="roles-box">
@@ -55,6 +55,9 @@
             localStorage.setItem("token", data.access_token);
             localStorage.setItem("user_id", data.user_id);
             localStorage.setItem("username", data.username);
+            localStorage.setItem("user_role", data.role);
+            console.log("Записал роль:", data.role);
+
             this.$router.push("/catalog");
           } else {
             alert("Ошибка входа: " + (data.error || "Неизвестно"));
@@ -64,8 +67,14 @@
           console.error("Ошибка запроса:", err);
           alert("Сервер не отвечает");
         });
+      },
+      loginAsGuest() {
+        localStorage.clear(); // удаляем данные
+        this.$emit('guest-login'); // сообщаем родителю
+        this.$router.push("/catalog");
       }
     }
+
   }
   </script>
   

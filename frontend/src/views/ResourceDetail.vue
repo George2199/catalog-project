@@ -33,6 +33,7 @@
           <p><strong>Контакт:</strong> {{ resource.contact_info }}</p>
 
           <button class="back-button" @click="$router.go(-1)">Назад</button>
+          <button class="download-button" @click="downloadPdf">Загрузить PDF</button>
         </div>
       </div>
     </div>
@@ -43,6 +44,7 @@
 
 <script>
 import AppHeader from '@/components/AppHeader.vue';
+import html2pdf from 'html2pdf.js';
 
 export default {
   name: 'ResourceDetail',
@@ -93,6 +95,30 @@ export default {
     },
     isHighlighted(tag) {
       return ['знания', 'наука', 'искусственный интеллект', 'open data'].includes(tag.toLowerCase());
+    },
+    downloadPdf() {
+      const element = document.querySelector('.resource-detail');
+
+      // Ждём загрузки всех <img>
+      const images = element.querySelectorAll('img');
+      const promises = Array.from(images).map(img => {
+        return new Promise(resolve => {
+          if (img.complete) resolve(); // уже загружено
+          else img.onload = resolve;
+        });
+      });
+
+      Promise.all(promises).then(() => {
+        const options = {
+          margin: 0.5,
+          filename: `${this.resource.title || 'ресурс'}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true }, // CORS нужен для картинок с другого источника
+          jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().set(options).from(element).save();
+      });
     }
   },
   mounted() {
@@ -155,4 +181,19 @@ export default {
     font-style: italic;
     color: #555;
   }
-  </style>
+
+  .download-button {
+  margin-top: 1rem;
+  margin-left: 1rem;
+  padding: 0.5rem 1rem;
+  background-color: #006400;
+  color: white;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+  }
+  .download-button:hover {
+    background-color: #008000;
+  }
+
+</style>

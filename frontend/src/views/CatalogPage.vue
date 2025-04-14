@@ -1,17 +1,23 @@
 <template>
   <div class="page-wrapper">
-    <AppHeader v-if="user" :user="user" />
+    <AppHeader />
+
 
     <div class="catalog-wrapper">
       <h1>Каталог ресурсов</h1>
 
       <div class="filters">
-        <input type="text" placeholder="Поиск по ключевым словам..." />
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="Поиск по ключевым словам..."
+          @input="currentPage = 1"
+        />
         <div class="filter-controls">
           <label>Сортировать по:</label>
-          <select>
-            <option>Дате</option>
-            <option>Названию</option>
+          <select v-model="sortBy" @change="sortResources">
+            <option value="date">Дате</option>
+            <option value="title">Названию</option>
           </select>
 
           <label>Показывать:</label>
@@ -24,13 +30,13 @@
       </div>
 
       <div class="section-chips">
-      <span
-        v-for="section in allSections"
-        :key="section"
-        class="section-chip"
-        :class="{ active: sectionFilter.includes(section) }"
-        @click="toggleSection(section)"
-      >
+        <span
+          v-for="section in allSections"
+          :key="section"
+          class="section-chip"
+          :class="{ active: sectionFilter.includes(section) }"
+          @click="toggleSection(section)"
+        >
         {{ section }}
       </span>
     </div>
@@ -47,6 +53,14 @@
             </div>
             <div class="resource-action">
               <router-link :to="`/resource/${resource.id}`" class="go-button">Перейти</router-link>
+            </div>
+            <div class="admin-controls" v-if="userRole === 'admin'">
+              <router-link :to="`/resources/${resource.id}/edit`" class="edit-btn">
+                ✏ Редактировать
+              </router-link>
+              <button class="delete-btn" @click="deleteResource(resource.id)">
+                🗑 Удалить
+              </button>
             </div>
           </div>
         </div>
@@ -79,7 +93,9 @@ export default {
       currentPage: 1,
       sectionFilter: [],
       allSections: ["science", "tech", "history", "math", "culture"],
-      user: null // ➕ Добавляем user
+      user: null,
+      sortBy: 'date', // 'date' или 'title'
+      searchQuery: '',
     }
   },
   created() {
@@ -115,6 +131,7 @@ export default {
       } catch (err) {
         console.error('Ошибка загрузки ресурсов:', err);
       }
+      this.sortResources();
     },
 
     formatDate(dateString) {
@@ -130,17 +147,61 @@ export default {
       }
       this.currentPage = 1
       this.fetchItems()
+    },
+    async deleteResource(id) {
+      if (!confirm("Удалить этот ресурс?")) return;
+
+      try {
+        const res = await fetch(`http://localhost:5000/api/resources/${id}`, {
+          method: 'DELETE'
+        });
+        if (!res.ok) throw new Error("Ошибка при удалении");
+
+        this.allResources = this.allResources.filter(r => r.id !== id);
+      } catch (err) {
+        console.error("Ошибка удаления:", err);
+        alert("Не удалось удалить ресурс");
+      }
+    },
+
+    sortResources() {
+      if (this.sortBy === 'date') {
+        this.allResources.sort((a, b) => new Date(b.last_updated) - new Date(a.last_updated));
+      } else if (this.sortBy === 'title') {
+        this.allResources.sort((a, b) => a.title.localeCompare(b.title));
+      }
     }
+
   },
   computed: {
     totalPages() {
-      return Math.ceil(this.allResources.length / this.perPage)
+      const filtered = this.allResources.filter(resource => {
+        const query = this.searchQuery.toLowerCase();
+        return (
+          resource.title.toLowerCase().includes(query) ||
+          resource.description.toLowerCase().includes(query)
+        );
+      });
+
+      return Math.ceil(filtered.length / this.perPage);
     },
+
     paginatedResources() {
-      const start = (this.currentPage - 1) * this.perPage
-      const end = start + this.perPage
-      return this.allResources.slice(start, end)
-    }
+      const filtered = this.allResources.filter(resource => {
+        const query = this.searchQuery.toLowerCase();
+        return (
+          resource.title.toLowerCase().includes(query) ||
+          resource.description.toLowerCase().includes(query)
+        );
+      });
+
+      const start = (this.currentPage - 1) * this.perPage;
+      const end = start + this.perPage;
+      return filtered.slice(start, end);
+    },
+    userRole() {
+      return localStorage.getItem("user_role");
+    },
   }
 }
 </script>
@@ -280,5 +341,26 @@ body.style {
   color: white;
 }
 
+.admin-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-left: 20px;
+}
+
+.edit-btn,
+.delete-btn {
+  background-color: #002d5b;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.delete-btn {
+  background-color: #b00020;
+}
 
 </style>

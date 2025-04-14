@@ -1,43 +1,60 @@
 <template>
-    <header class="header">
-      <div class="header__left">
-        <router-link to="/catalog" class="header__home-button">
-          <img src="@/assets/home.png" alt="Домой" />
-        </router-link>
-      </div>
-  
-      <router-link to="/profile" class="header__right" v-if="isLoggedIn">
-        <span class="header__username">{{ user?.username || 'Гость'}}</span>
-        <img :src="avatarUrl" alt="Аватар пользователя" class="header__avatar" />
+  <header class="header">
+    <div class="header__left">
+      <router-link to="/catalog" class="header__home-button">
+        <img src="@/assets/home.png" alt="Домой" />
       </router-link>
-    </header>
-  </template>
+    </div>
+
+    <div class="header__right" @click="handleProfileClick">
+      <span class="header__username">{{ displayName }}</span>
+      <img :src="avatarUrl" alt="Аватар пользователя" class="header__avatar" />
+    </div>
+  </header>
+</template>
   
-  <script>
-  export default {
-    props: {
-      user: Object
+<script>
+export default {
+  data() {
+    return {
+      username: null
+    }
+  },
+  computed: {
+    isLoggedIn() {
+      return !!this.username;
     },
-    computed: {
-      isLoggedIn() {
-        return !!this.user
-      },
-      avatarUrl() {
-        return require('@/assets/avatar.png')
-      }
+    avatarUrl() {
+      return require('@/assets/avatar.png');
     },
-    methods: {
-      logout() {
-        localStorage.removeItem('token')
-        localStorage.removeItem('username')
-        localStorage.removeItem('user_id')
-        this.$router.push('/login')
+    displayName() {
+      return this.username || "Гость";
+    }
+  },
+  mounted() {
+    this.username = localStorage.getItem("username");
+    window.addEventListener("storage", this.syncUsername);
+  },
+  beforeUnmount() {
+    window.removeEventListener("storage", this.syncUsername);
+  },
+  methods: {
+    syncUsername() {
+      this.username = localStorage.getItem("username");
+    },
+    handleProfileClick() {
+      if (this.isLoggedIn) {
+        this.$router.push("/profile");
+      } else {
+        this.$router.push("/register");
       }
     }
   }
-  </script>
+}
+</script>
+
   
-  <style scoped>
+<style scoped>
   .header {
     background-color: #002b5b;
     display: flex;
@@ -74,5 +91,5 @@
     border-radius: 50%;
     background-color: darkred;
   }
-  </style>
+</style>
   
